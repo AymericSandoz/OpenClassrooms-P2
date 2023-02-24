@@ -1,6 +1,7 @@
 
 import requests
 from bs4 import BeautifulSoup
+import csv
 url = "http://books.toscrape.com/"
 page = requests.get(url)
 soup = BeautifulSoup(page.content, 'html.parser')
@@ -27,16 +28,15 @@ for category in categorys_a:
  books_data[category.string]=books_in_one_category
 print(books_data)
 
-# url_page_category = requests.get("http://books.toscrape.com/catalogue/category/books/mystery_3/index.html")
-# page = requests.get(url)
-# prices_request=soup.find_all(class_='price_color')
-# books_in_one_category=[]
-# for price in prices_request:
-#     books_in_one_category.append(price.string)
-# print(books_in_one_category)
-# books_data["horreur"]=books_in_one_category
-# print(books_data)
 
+with open('livres.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile,delimiter=",")
+
+    writer.writerow(['catégorie', 'prix'])
+
+    for category, books in books_data.items():
+        for book_price in books:
+            writer.writerow([category, book_price])
 
 
 
