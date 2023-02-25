@@ -35,6 +35,14 @@ for category in categorys_a[:5]:
  soup = BeautifulSoup(page.content, 'html.parser')
  products=soup.find_all('article')
  category_file = worbook.create_sheet(title=category.string.strip())
+ 
+ pager = soup.find('ul', class_='pager')
+ if soup.find(class_="pager") is not None: 
+  page_info = pager.find('li', class_='current').text.strip()
+  max_page = int(page_info.split()[-1])
+  print(max_page)
+ else : 
+   print("oups")
 
 
  coloumn_headers=["product_page_url","universal_product_code","title","price_including_tax","price_excluding_tax","number_available","description","category","review_rating","image_url"]
@@ -43,7 +51,7 @@ for category in categorys_a[:5]:
  
  
  row=2
- for product in products:
+ for product in products[:3]:
   
   products_links=product.find('a')
   product_page_url=products_links.get("href")
@@ -120,9 +128,9 @@ for category in categorys_a[:5]:
 # worbook.save(filepath)
 
 
-first_sheet = worbook['Sheet']
-worbook.remove(first_sheet)
-worbook.save("books.xlsx")
+# first_sheet = worbook['Sheet']
+# worbook.remove(first_sheet)
+# worbook.save("books.xlsx")
 
 
 
