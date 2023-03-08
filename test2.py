@@ -7,10 +7,12 @@ import os
 import re
 from PIL import Image
 from io import BytesIO
+from unidecode import unidecode
+
+
 
 # define a function to generate slug
 def generate_slug(text):
-    # convert to lowercase
     text = text.lower()
     # remove special characters except hyphen and whitespace
     text = re.sub(r'[^\w\s-]', '', text)
@@ -18,13 +20,18 @@ def generate_slug(text):
     text = re.sub(r'\s+', '-', text)
     # replace consecutive hyphens with a single hyphen
     text = re.sub(r'--+', '-', text)
+    # remove accents
+    text = unidecode(text)
     # remove hyphens at the beginning and end of text
     text = text.strip('-')
+    # Keep text length < 50
+    if len(text) > 50:
+        text = text[:47] + "..."
     return text
 
 # create an empty workbook
 worbook = openpyxl.Workbook()
-books_data = {}
+
 
 # specify the URL
 url = "http://books.toscrape.com/"
@@ -39,8 +46,8 @@ categorys_a = nav.find_all('a')
 # remove the first link, which is not a category
 categorys_a.pop(0)
 
-# loop through the first 5 categories
-for category in categorys_a[:5]:
+# loop through categories
+for category in categorys_a:
     # get the URL of the category page
     url_page_category = category.get("href")
     # send a GET request to the category page URL
@@ -85,7 +92,7 @@ for category in categorys_a[:5]:
         products = soup.find_all('article')
         
         # Loop through all the book products on the current page
-        for product in products[:3]:
+        for product in products:
             # Extract the URL of the current book product 
             products_links=product.find('a')
             product_page_url=products_links.get("href")
@@ -129,7 +136,7 @@ for category in categorys_a[:5]:
 
             # Download and save the image
             if os.path.isfile(os.path.join(repertoire, slug_image + ".jpg")):
-                print("Error : Img already saved")
+                print(f"Error : Img :{slug_image} already saved")
             else:
                 response = requests.get(image_url)
                 image = Image.open(BytesIO(response.content))
