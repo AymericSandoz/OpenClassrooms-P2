@@ -31,7 +31,7 @@ pip install -r requirements.txt
 
 - Python
 
-## Option
+## Options
 
-Le fichier ****\***** permet de générer un fichier xlxs possédant une feuille par cétagorie de livres.
-Le fichier ****\***** permet de générer autant de fichier csv qu'il y a de catégories de livres.
+Le fichier index2 permet de générer un fichier xlxs possédant une feuille par cétagorie de livres.
+Le fichier index permet de générer autant de fichiers csv qu'il y a de catégories de livres.

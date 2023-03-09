@@ -1,8 +1,8 @@
+#creates as many csv files as categorys
+
 # import necessary modules
 import requests
 from bs4 import BeautifulSoup
-import csv
-import openpyxl
 import os
 import re
 from PIL import Image
@@ -177,10 +177,10 @@ def save_image(soup,title,category,image_url):
     if not os.path.exists(repertoire):
         os.makedirs(repertoire)
 
-    # Download and save the image
-    # if os.path.isfile(os.path.join(repertoire, slug_image + ".jpg")):
-    #     print(f"Error : Img :{slug_image} already saved")
-    # else:
+    #Download and save the image
+    if os.path.isfile(os.path.join(repertoire, slug_image + ".jpg")):
+        print(f"Error : Img :{slug_image} already saved")
+    else:
         response = requests.get(image_url)
         image = Image.open(BytesIO(response.content))
         image.save(repertoire + "/" + slug_image + ".jpg", "JPEG")
