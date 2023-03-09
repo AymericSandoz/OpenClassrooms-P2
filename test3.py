@@ -66,7 +66,6 @@ def get_categorys_links():
 
 
 def create_and_fill_worksheet_by_category(categorys_a,workbook):
-    print("create_and_fill_worksheet_by_category")
     # loop through categories
     for category in categorys_a[:3]:
         category_file=create_empty_sheet(category,workbook)
@@ -117,27 +116,28 @@ def write_column_headers(coloumn_headers,category_file):
     return category_file
 
 def get_and_save_category_pages_content(max_page,category,category_file):
-    print("get_and_save_category_pages_content")
-    # initialize row counter to 2, since we already wrote the headers to row 1
-    row = 2
+    
+    nb_of_articles_by_pages = 20
     # loop through all pages of the current category 
     for page_number in range(1,max_page+1):
-        page_content = get_category_page_content(max_page,page_number,category)
-        save_page_content(page_content,category_file,row)
-        # Increment the row counter
-        row=row+1
+        row = 2 + page_number*nb_of_articles_by_pages - nb_of_articles_by_pages
+        page_content = get_and_save_category_page_content(max_page,page_number,category,category_file,row)
+    
 
 
-def save_page_content(page_content,category_file,row):
-        # Write the values to the Excel file
-        print("page_content:",page_content)
-        for col, value in enumerate(page_content, start=1):
-            category_file.cell(row=row, column=col, value=value)
-            return category_file
+def save_row(coloumn_values,category_file,row):
+    # Write the values to the Excel file
+    print("coloumn_values:!",coloumn_values)
+    for col, value in enumerate(coloumn_values, start=1):
+        print("values:",value)
+        print("row:",row)
+        print("col",col)
+        category_file.cell(row=row, column=col, value=value)
+    return category_file
 
 
 
-def get_category_page_content(max_page,page_number,category):
+def get_and_save_category_page_content(max_page,page_number,category,category_file,row):
     # Build the URL of the current category page taking page into account
     
     url_page_category = category.get("href")
@@ -149,20 +149,20 @@ def get_category_page_content(max_page,page_number,category):
     page = requests.get(f"http://books.toscrape.com/{url_page_category}")
     soup = BeautifulSoup(page.content, 'html.parser')
     
-    page_content = get_category_products_infos(soup,category)
+    get_and_save_category_products_infos(soup,category,category_file,row)
    
-    # Extract all the book products on the current page
-
-    return page_content
     
 
-def get_category_products_infos(soup,category):
+def get_and_save_category_products_infos(soup,category,category_file,row):
     products = soup.find_all('article')
     # Loop through all the book products on the current page
-    for product in products:
-        get_product_infos_and_save_img(product,category)
 
-def get_product_infos_and_save_img(product,category):
+    
+    for product in products:
+        get_product_infos_and_save_img(product,category,category_file,row)
+        row = row+1
+
+def get_product_infos_and_save_img(product,category,category_file,row):
     # Extract the URL of the current book product 
     products_links=product.find('a')
     product_page_url=products_links.get("href")
@@ -193,7 +193,9 @@ def get_product_infos_and_save_img(product,category):
 
     # Construct a list of values to be written to the Excel file
     coloumn_values=[product_page_url,universal_product_code,title,price_including_tax,price_excluding_tax,number_available,product_description,category.string.strip(),review_rating,image_url]
-    print(coloumn_values)
+
+        # Write the values to the Excel file
+    save_row(coloumn_values,category_file,row)
     return coloumn_values
 
 
