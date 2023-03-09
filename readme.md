@@ -1,7 +1,7 @@
 # Description générale du projet
 
-Projet Django réalisé dans le cadre d'une recherche d'alternance.
-Application permettant de lister les corps célestes qui passent à proximité de la terre durant une période donnée.
+Projet réalisé dans le cadre de la formation Développeur d'applications python.
+Application python (un scraper) développé en Python, capable d'extraire les informations tarifaires de la libraies en ligne http://books.toscrape.com/.
 
 ## Installation et démarrage
 
