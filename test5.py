@@ -30,6 +30,9 @@ def create_books_array_and_save_as_excel_file(category):
     column_headers = define_column_headers()
     books = get_and_save_category_pages_content(max_page,category,column_headers,books)
     df = pd.DataFrame(books, columns=column_headers)
+    
+    if not os.path.exists('excelFiles'):
+        os.makedirs('excelFiles')
     df.to_csv(f'excelFiles/{category.string.strip()}.csv',sep=';', index=False)
 
 
