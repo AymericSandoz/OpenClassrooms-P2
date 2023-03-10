@@ -1,7 +1,7 @@
 # Description générale du projet
 
 Projet réalisé dans le cadre de la formation Développeur d'applications python.
-Application python (un scraper) développé en Python, capable d'extraire les informations tarifaires de la libraies en ligne http://books.toscrape.com/.
+Application python (un scraper), capable d'extraire les informations de la librairie en ligne http://books.toscrape.com/.
 
 ## Installation et démarrage
 
