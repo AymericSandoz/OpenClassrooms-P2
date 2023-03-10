@@ -25,6 +25,20 @@ Installer les packages nécéssaires
 pip install -r requirements.txt
 ```
 
+## Exécution
+
+Ouvrez un terminal de commande au niveau du projet puis éxécutez la commande :
+
+```
+python index.py
+```
+
+ou
+
+```
+python index2.py
+```
+
 ## Outils utilisés
 
 ####
@@ -33,5 +47,5 @@ pip install -r requirements.txt
 
 ## Options
 
-Le fichier index2 permet de générer un fichier xlxs possédant une feuille par cétagorie de livres.
+Le fichier index2 permet de générer un fichier xlxs possédant une feuille par catégorie de livres.
 Le fichier index permet de générer autant de fichiers csv qu'il y a de catégories de livres.

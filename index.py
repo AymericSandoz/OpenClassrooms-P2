@@ -1,4 +1,5 @@
 #creates as many csv files as categorys
+#docstrings et typeint
 
 # import necessary modules
 import requests
@@ -8,7 +9,7 @@ import re
 from PIL import Image
 from io import BytesIO
 from unidecode import unidecode
-import pandas as pd
+import csv
 
 
 
@@ -28,12 +29,20 @@ def create_books_array_and_save_as_excel_file(category):
     soup=get_index_page_content(category)
     max_page=find_category_page_number(soup)
     column_headers = define_column_headers()
-    books = get_and_save_category_pages_content(max_page,category,column_headers,books)
-    df = pd.DataFrame(books, columns=column_headers)
-    
+    books = get_and_save_category_pages_content(max_page,category,books)
+    save_as_excel_files(books,column_headers,category)
+
+
+def save_as_excel_files(books,column_headers,category):
     if not os.path.exists('excelFiles'):
         os.makedirs('excelFiles')
-    df.to_csv(f'excelFiles/{category.string.strip()}.csv',sep=';', index=False)
+
+    with open(f"excelFiles/{category.string.strip()}-books.csv", mode="w", encoding='utf-8-sig',newline="") as file:
+
+        writer = csv.writer(file,delimiter=';')
+        writer.writerow(column_headers)
+        writer.writerows(books)
+        
 
 
 def get_categorys_links():
@@ -77,27 +86,25 @@ def find_category_page_number(soup):
 
 def define_column_headers():
     # create column headers for the worksheet
-    coloumn_headers = ["product_page_url", "universal_product_code", "title", "price_including_tax", "price_excluding_tax", "number_available", "description", "category", "review_rating", "image_url"]
+    coloumn_headers = ["Product page url", "Universal product code", "Title", "Price including tax", "Price excluding tax", "Number available", "Description", "Category", "Review rating", "Image Url"]
     return coloumn_headers
 
 
-def get_and_save_category_pages_content(max_page,category,column_headers,books):
-    nb_of_articles_by_pages = 20
+def get_and_save_category_pages_content(max_page,category,books):
     # loop through all pages of the current category 
     for page_number in range(1,max_page+1):
-        row = 2 + page_number*nb_of_articles_by_pages - nb_of_articles_by_pages
-        page_content = get_and_save_category_page_content(max_page,page_number,category,books,row)
+        page_content = get_and_save_category_page_content(max_page,page_number,category,books)
     return books
 
 
-def save_row(coloumn_values,books,row):
+def save_row(coloumn_values,books):
     # Write the values to the Excel file
     books.append(coloumn_values)
     return books
 
 
 
-def get_and_save_category_page_content(max_page,page_number,category,books,row):
+def get_and_save_category_page_content(max_page,page_number,category,books):
     # Build the URL of the current category page taking page into account
     
     url_page_category = category.get("href")
@@ -105,24 +112,23 @@ def get_and_save_category_page_content(max_page,page_number,category,books,row):
     if max_page>1:
         url_page_category=url_page_category.replace("index",f"page-{page_number}")
             
-        # Send a GET request to the current category page with pagination and create a BeautifulSoup object to parse the HTML content of the page
+    # Send a GET request to the current category page with pagination and create a BeautifulSoup object to parse the HTML content of the page
     page = requests.get(f"http://books.toscrape.com/{url_page_category}")
     soup = BeautifulSoup(page.content, 'html.parser')
     
-    get_and_save_category_products_infos(soup,category,books,row)
+    get_and_save_category_products_infos(soup,category,books)
    
     
 
-def get_and_save_category_products_infos(soup,category,books,row):
+def get_and_save_category_products_infos(soup,category,books):
     products = soup.find_all('article')
+
     # Loop through all the book products on the current page
-
-    
     for product in products:
-        get_product_infos_and_save_img(product,category,books,row)
-        row = row+1
+        get_product_infos_and_save_img(product,category,books)
 
-def get_product_infos_and_save_img(product,category,books,row):
+
+def get_product_infos_and_save_img(product,category,books):
     # Extract the URL of the current book product 
     products_links=product.find('a')
     product_page_url=products_links.get("href")
@@ -138,6 +144,7 @@ def get_product_infos_and_save_img(product,category,books,row):
     title=soup.find('h1').string
     price_including_tax=td[2].string
     price_excluding_tax=td[3].string
+
     number_available=re.search(r'\d+', td[5].string).group()   
     
     # Find the review rating and extract it
@@ -155,7 +162,7 @@ def get_product_infos_and_save_img(product,category,books,row):
     coloumn_values=[product_page_url,universal_product_code,title,price_including_tax,price_excluding_tax,number_available,product_description,category.string.strip(),review_rating,image_url]
 
         # Write the values to the Excel file
-    save_row(coloumn_values,books,row)
+    save_row(coloumn_values,books)
     return coloumn_values
 
 
@@ -167,6 +174,7 @@ def get_product_description(soup):
     else:
         product_description = "No product description available"
     return product_description
+
 
 def save_image(soup,title,category,image_url):
     #construct a name(slud) for later save
@@ -203,5 +211,5 @@ def generate_slug(text):
         text = text[:47] + "..."
     return text
 
-if __name__ == "__main__": #quel est le nom de l'objet en cours (point d'entrée normal dans un code python)
+if __name__ == "__main__": 
     main()

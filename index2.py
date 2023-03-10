@@ -1,7 +1,6 @@
 # import necessary modules
 import requests
 from bs4 import BeautifulSoup
-import csv
 import openpyxl
 import os
 import re
@@ -16,29 +15,18 @@ def main():
 
 
 def construct_workbook():
+    # create an empty workbook
+    workbook = openpyxl.Workbook()
 
+    #Get categorys links and create a worksheet by category
     categorys_link = get_categorys_links()
-    create_and_fill_worksheet_by_category(categorys_link)
+    create_and_fill_worksheet_by_category(categorys_link,workbook)
 
-    
+    # Remove the first sheet(empty) from the Excel file and save it
+    first_sheet = workbook['Sheet']
+    workbook.remove(first_sheet)
+    workbook.save("books.xlsx")
 
-# define a function to generate slug
-def generate_slug(text):
-    text = text.lower()
-    # remove special characters except hyphen and whitespace
-    text = re.sub(r'[^\w\s-]', '', text)
-    # replace whitespaces with hyphen
-    text = re.sub(r'\s+', '-', text)
-    # replace consecutive hyphens with a single hyphen
-    text = re.sub(r'--+', '-', text)
-    # remove accents
-    text = unidecode(text)
-    # remove hyphens at the beginning and end of text
-    text = text.strip('-')
-    # Keep text length < 50
-    if len(text) > 50:
-        text = text[:47] + "..."
-    return text
 
 
 def get_categorys_links():
@@ -57,20 +45,20 @@ def get_categorys_links():
     return categorys_a
 
 
-def create_and_fill_worksheet_by_category(categorys_a):
+def create_and_fill_worksheet_by_category(categorys_a,workbook):
     # loop through categories
-    for category in categorys_a[:3]:
-        writer=create_empty_sheet(category)
+    for category in categorys_a:
+        category_file=create_empty_sheet(category,workbook)
         soup=get_index_page_content(category)
         max_page=find_category_page_number(soup)
         column_headers = define_column_headers()
-        writer = write_column_headers(column_headers,writer)
-        get_and_save_category_pages_content(max_page,category,writer)
+        category_file = write_column_headers(column_headers,category_file)
+        get_and_save_category_pages_content(max_page,category,category_file)
 
-def create_empty_sheet(category):
-    with open(f"{category.string.strip()}-books.csv", 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile,delimiter=",")
-    return writer
+def create_empty_sheet(category,workbook):
+    # create a new worksheet in the workbook for the current category
+    category_file = workbook.create_sheet(title=category.string.strip())
+    return category_file
 
 
 def get_index_page_content(category):
@@ -98,32 +86,34 @@ def find_category_page_number(soup):
 
 def define_column_headers():
     # create column headers for the worksheet
-    coloumn_headers = ["product_page_url", "universal_product_code", "title", "price_including_tax", "price_excluding_tax", "number_available", "description", "category", "review_rating", "image_url"]
+    coloumn_headers = ["Product page url", "Universal product code", "Title", "Price including tax", "Price excluding tax", "Number available", "Description", "Category", "Review rating", "Image Url"]
     return coloumn_headers
 
-def write_column_headers(coloumn_headers,writer):   
+def write_column_headers(coloumn_headers,category_file):   
     # write the column headers to the first row of the worksheet
-    writer.writerow(coloumn_headers) 
-    return writer
+    for col, header in enumerate(coloumn_headers, start=1):
+        category_file.cell(row=1, column=col, value=header) 
+    return category_file
 
-def get_and_save_category_pages_content(max_page,category,writer):
+def get_and_save_category_pages_content(max_page,category,category_file):
     
     nb_of_articles_by_pages = 20
     # loop through all pages of the current category 
     for page_number in range(1,max_page+1):
         row = 2 + page_number*nb_of_articles_by_pages - nb_of_articles_by_pages
-        page_content = get_and_save_category_page_content(max_page,page_number,category,writer,row)
+        page_content = get_and_save_category_page_content(max_page,page_number,category,category_file,row)
     
 
 
-def save_row(coloumn_values,writer,row):
+def save_row(coloumn_values,category_file,row):
     # Write the values to the Excel file
-    writer.writerow(coloumn_values)
-    return writer
+    for col, value in enumerate(coloumn_values, start=1):
+        category_file.cell(row=row, column=col, value=value)
+    return category_file
 
 
 
-def get_and_save_category_page_content(max_page,page_number,category,writer,row):
+def get_and_save_category_page_content(max_page,page_number,category,category_file,row):
     # Build the URL of the current category page taking page into account
     
     url_page_category = category.get("href")
@@ -135,20 +125,20 @@ def get_and_save_category_page_content(max_page,page_number,category,writer,row)
     page = requests.get(f"http://books.toscrape.com/{url_page_category}")
     soup = BeautifulSoup(page.content, 'html.parser')
     
-    get_and_save_category_products_infos(soup,category,writer,row)
+    get_and_save_category_products_infos(soup,category,category_file,row)
    
     
 
-def get_and_save_category_products_infos(soup,category,writer,row):
+def get_and_save_category_products_infos(soup,category,category_file,row):
     products = soup.find_all('article')
     # Loop through all the book products on the current page
 
     
     for product in products:
-        get_product_infos_and_save_img(product,category,writer,row)
+        get_product_infos_and_save_img(product,category,category_file,row)
         row = row+1
 
-def get_product_infos_and_save_img(product,category,writer,row):
+def get_product_infos_and_save_img(product,category,category_file,row):
     # Extract the URL of the current book product 
     products_links=product.find('a')
     product_page_url=products_links.get("href")
@@ -181,7 +171,7 @@ def get_product_infos_and_save_img(product,category,writer,row):
     coloumn_values=[product_page_url,universal_product_code,title,price_including_tax,price_excluding_tax,number_available,product_description,category.string.strip(),review_rating,image_url]
 
         # Write the values to the Excel file
-    save_row(coloumn_values,writer,row)
+    save_row(coloumn_values,category_file,row)
     return coloumn_values
 
 
@@ -211,7 +201,23 @@ def save_image(soup,title,category,image_url):
         image = Image.open(BytesIO(response.content))
         image.save(repertoire + "/" + slug_image + ".jpg", "JPEG")
 
-
+# define a function to generate slug
+def generate_slug(text):
+    text = text.lower()
+    # remove special characters except hyphen and whitespace
+    text = re.sub(r'[^\w\s-]', '', text)
+    # replace whitespaces with hyphen
+    text = re.sub(r'\s+', '-', text)
+    # replace consecutive hyphens with a single hyphen
+    text = re.sub(r'--+', '-', text)
+    # remove accents
+    text = unidecode(text)
+    # remove hyphens at the beginning and end of text
+    text = text.strip('-')
+    # Keep text length < 50
+    if len(text) > 50:
+        text = text[:47] + "..."
+    return text
 
 if __name__ == "__main__": #quel est le nom de l'objet en cours (point d'entrée normal dans un code python)
     main()
