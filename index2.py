@@ -152,12 +152,15 @@ def get_product_infos_and_save_img(product,category,category_file,row):
     td=soup.find_all('td')
     universal_product_code=td[0].string
     title=soup.find('h1').string
-    price_including_tax=td[2].string
-    price_excluding_tax=td[3].string
-    number_available=re.search(r'\d+', td[5].string).group()   
+    price_including_tax=convert_price_to_number(td[2].string)
+    price_excluding_tax=convert_price_to_number(td[3].string)
+    number_available=float(re.search(r'\d+', td[5].string).group()) 
     
     # Find the review rating and extract it
     review_rating = soup.find(class_="star-rating")["class"][1]
+    review_rating = convert_review_rating_to_int(review_rating)
+
+    # Find the product description and extract it
     product_description = get_product_description(soup)
     
      # Find the product image and construct the image URL
@@ -200,6 +203,28 @@ def save_image(soup,title,category,image_url):
         response = requests.get(image_url)
         image = Image.open(BytesIO(response.content))
         image.save(repertoire + "/" + slug_image + ".jpg", "JPEG")
+
+
+def convert_price_to_number(price):
+    float_value = float(price.replace("£", ""))
+    return float_value
+
+def convert_review_rating_to_int(review_rating):
+    rating_dict = {
+    "One": 1,
+    "Two": 2,
+    "Three": 3,
+    "Four": 4,
+    "Five": 5
+    }
+
+
+    if review_rating in rating_dict:
+        numerical_rating = rating_dict[review_rating]
+        return numerical_rating
+    else:
+        numerical_rating = "Invalid rating"
+
 
 # define a function to generate slug
 def generate_slug(text):
